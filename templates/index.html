@@ -11,8 +11,9 @@
 <body>
     {{ dropzone.create(action="/uploads") }}
 
-    {% for file in files %}
-    {{ file }} <br>
+    {% for key, value in files.items() %}
+        {{ key }} <span>:</span> {{ value }} 
+        <br>
     {% endfor %}
 
     {{ dropzone.config() }}
