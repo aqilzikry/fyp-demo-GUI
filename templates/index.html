@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {{ dropzone.load_css() }}
     <title>CCAS</title>
 </head>
+
 <body>
     {{ dropzone.create(action="/uploads") }}
+
+    {% for file in files %}
+    {{ file }} <br>
+    {% endfor %}
 
     {{ dropzone.config() }}
     {{ dropzone.load_js() }}
 </body>
+
 </html>
