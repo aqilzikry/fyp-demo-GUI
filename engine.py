@@ -1,6 +1,7 @@
 import speech_recognition as sr
 import pickle
 import os
+import glob
 import malaya as m
 import json
 from monkeylearn import MonkeyLearn
@@ -9,25 +10,20 @@ from emotion_recog import extract_feature
 toReturn = {}
 # initiate speech recognizer and set language (Malay: ms-MY, English: en-US)
 r = sr.Recognizer()
-#lang = "en-US"
-lang = "ms-MY"
 
-# load audio file to be used
-#filename = "demo/Demo_angry_malay.wav"
-filename = "demo/Demo_happy_manglish.wav"
-#filename = "demo/Demo_neutral_english.wav"
-
-# run speech recognition and display result
+filename = ""
+filelocation = ""
 text = ""
-
+lang = "ms-MY"
 
 def recog_speech():
     # prepare audio for recognition
-    speech = sr.AudioFile(filename)
+    speech = sr.AudioFile(filelocation)
     with speech as source:
         audio = r.record(source)
 
     # recognize speech and return result 
+    global text
     text = r.recognize_google(audio, language=lang)
     return text
 
@@ -36,13 +32,14 @@ def recog_emotion():
     model = pickle.load(open("model/emotionrecog.model", "rb"))
 
     # extract features and reshape it
-    features = extract_feature(filename, mfcc=True, chroma=True, mel=True).reshape(1, -1)
+    features = extract_feature(filelocation, mfcc=True, chroma=True, mel=True).reshape(1, -1)
 
     # predict emotion
     result = model.predict_proba(features)
 
     # add result to dict
-    toReturn['emotion'] = {'angry' : result[0][0], 'happy' : result[0][1], 'neutral' : result[0][2]}
+    emotion = {'angry' : result[0][0], 'happy' : result[0][1], 'neutral' : result[0][2]}
+    return emotion
 
 def analyse_sentiment():
     # use different model for different language
@@ -61,7 +58,7 @@ def analyse_sentiment():
         sentiment = result[0]["classifications"][0]["tag_name"], str(result[0]["classifications"][0]["confidence"])
     
     # add result to dict
-    toReturn['sentiment'] = sentiment[0]
+    return sentiment[0]
 
 def detect_topic():
     # load transformer model 'alxlnet' from malaya
@@ -78,22 +75,37 @@ def detect_topic():
         sorted_result[i][1] = sorted_result[i][1].item()
 
     # add result to dict
-    toReturn['topic'] = dict(sorted_result)
+    return dict(sorted_result)
+
+def iterate_files():
+    for file in glob.glob("files/*.wav"):
+        global filename
+        filename = os.path.basename(file)
+        global filelocation
+        filelocation = file
+        toReturn[filename] = ({'speech' : recog_speech()})
+        toReturn[filename].update({'emotion' : recog_emotion()})
+        toReturn[filename].update({'sentiment' : analyse_sentiment()})
+        toReturn[filename].update({'topic' : detect_topic()})
+
+    return toReturn
 
 def main():
-    text = recog_speech()
+    toReturn = iterate_files()
 
-     # add result to dict
-    toReturn['speech'] = text
+    #text = recog_speech()
+
+    # add result to dict
+    #toReturn['speech'] = text
 
     # run emotion recognition
-    recog_emotion()    
+    #recog_emotion()    
 
     # run sentiment analysis
-    analyse_sentiment()
+    #analyse_sentiment()
 
     # run topic classification
-    detect_topic()
+    #detect_topic()
 
     # dump dict to a json file
     #with open("sample.json", "w") as outfile:
