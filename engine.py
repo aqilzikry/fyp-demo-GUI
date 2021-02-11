@@ -39,6 +39,7 @@ def recog_emotion():
 
     # add result to dict
     emotion = {'angry' : result[0][0], 'happy' : result[0][1], 'neutral' : result[0][2]}
+    print(emotion)
     return emotion
 
 def analyse_sentiment():
@@ -124,8 +125,7 @@ def single_file(toProcess):
             toReturn[filename].update({'emotion' : recog_emotion()})
             toReturn[filename].update({'sentiment' : analyse_sentiment()})
             toReturn[filename].update({'topic' : detect_topic()})
-
-    return toReturn
+            return toReturn
 
 if __name__ == "__main__":
     main()
