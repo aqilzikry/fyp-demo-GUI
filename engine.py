@@ -113,5 +113,19 @@ def main():
 
     return toReturn
 
+def single_file(toProcess):
+    for file in glob.glob("files/*.wav"):
+        if os.path.basename(file) == toProcess:
+            global filename
+            filename = os.path.basename(file)
+            global filelocation
+            filelocation = file
+            toReturn[filename] = ({'speech' : recog_speech()})
+            toReturn[filename].update({'emotion' : recog_emotion()})
+            toReturn[filename].update({'sentiment' : analyse_sentiment()})
+            toReturn[filename].update({'topic' : detect_topic()})
+
+    return toReturn
+
 if __name__ == "__main__":
     main()

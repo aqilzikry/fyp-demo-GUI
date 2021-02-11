@@ -11,4 +11,9 @@ def home():
     result = engine.main()
     return make_response(jsonify(result), 200)
 
+@app.route('/process/<filename>', methods=['GET'])
+def singlefile(filename):
+    result = engine.single_file(filename)
+    return make_response(jsonify(result), 200)
+
 app.run(host='127.0.0.1', port=7000)
