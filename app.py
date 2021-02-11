@@ -31,7 +31,7 @@ def upload():
         f.save(os.path.join('files', f.filename))
 
     #respond = requests.get(URL)
-    respond = requests.get(URL + "/process/Demo_angry_malay.wav")
+    respond = requests.get(URL + "/process/Demo_happy_manglish.wav")
     print(respond)
     json_data = respond.json()
     dumped_json_data = json.dumps(json_data, indent=4)
