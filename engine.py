@@ -140,7 +140,7 @@ def save_to_db(currentFile):
     cur.execute("INSERT INTO calls(operator_id, emotion, emotion_prob, sentiment, sentiment_prob, topics, cust_id) VALUES (%s, %s, %s, %s, %s, %s, %s)", ("1", emotion, emotion_prob, sentiment, sentiment_prob, topics, "1"))
     mydb.commit()
     cur.close()
-    print(currentFile + 'Success')
+    print(currentFile + ' success')
 
 if __name__ == "__main__":
     main()
