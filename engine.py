@@ -4,12 +4,22 @@ import os
 import glob
 import malaya as m
 import json
+import operator
+import mysql.connector
 from monkeylearn import MonkeyLearn
 from emotion_recog import extract_feature
 
 toReturn = {}
+
 # initiate speech recognizer and set language (Malay: ms-MY, English: en-US)
 r = sr.Recognizer()
+
+mydb = mysql.connector.connect(
+    host = "localhost",
+    user = "root",
+    password = "",
+    database = "ccas_db"
+)
 
 filename = ""
 filelocation = ""
@@ -40,6 +50,7 @@ def recog_emotion():
     # add result to dict
     emotion = {'angry' : result[0][0], 'happy' : result[0][1], 'neutral' : result[0][2]}
     print(emotion)
+    
     return emotion
 
 def analyse_sentiment():
@@ -88,29 +99,18 @@ def iterate_files():
         toReturn[filename].update({'emotion' : recog_emotion()})
         toReturn[filename].update({'sentiment' : analyse_sentiment()})
         toReturn[filename].update({'topic' : detect_topic()})
+        save_to_db(filename)
+        os.remove(file)
+
+    return toReturn
+
+def process():
+    toReturn = iterate_files()
 
     return toReturn
 
 def main():
     toReturn = iterate_files()
-
-    #text = recog_speech()
-
-    # add result to dict
-    #toReturn['speech'] = text
-
-    # run emotion recognition
-    #recog_emotion()    
-
-    # run sentiment analysis
-    #analyse_sentiment()
-
-    # run topic classification
-    #detect_topic()
-
-    # dump dict to a json file
-    #with open("sample.json", "w") as outfile:
-    #    json.dump(toReturn, outfile)
 
     return toReturn
 
@@ -126,6 +126,21 @@ def single_file(toProcess):
             toReturn[filename].update({'sentiment' : analyse_sentiment()})
             toReturn[filename].update({'topic' : detect_topic()})
             return toReturn
+
+def save_to_db(currentFile):
+    topics = json.dumps(toReturn[currentFile]['topic'])
+
+    emotion = max(toReturn[currentFile]['emotion'].items(), key=operator.itemgetter(1))[0]
+    emotion_prob = float(toReturn[currentFile]['emotion'][emotion])
+    
+    sentiment = max(toReturn[currentFile]['sentiment'].items(), key=operator.itemgetter(1))[0]
+    sentiment_prob = float(toReturn[currentFile]['sentiment'][sentiment])
+
+    cur = mydb.cursor()
+    cur.execute("INSERT INTO calls(operator_id, emotion, emotion_prob, sentiment, sentiment_prob, topics, cust_id) VALUES (%s, %s, %s, %s, %s, %s, %s)", ("1", emotion, emotion_prob, sentiment, sentiment_prob, topics, "1"))
+    mydb.commit()
+    cur.close()
+    print(currentFile + 'Success')
 
 if __name__ == "__main__":
     main()
