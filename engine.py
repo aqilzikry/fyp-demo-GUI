@@ -6,8 +6,15 @@ import malaya as m
 import json
 import operator
 import mysql.connector
+from flask import Flask
 from monkeylearn import MonkeyLearn
 from emotion_recog import extract_feature
+from celery import Celery
+
+engine = Flask(__name__)
+
+# Set up celery client
+client = Celery(engine.name, backend="redis://localhost:6379/0", broker="redis://localhost:6379/0")
 
 toReturn = {}
 
@@ -89,6 +96,7 @@ def detect_topic():
     # add result to dict
     return dict(sorted_result)
 
+@client.task
 def iterate_files():
     for file in glob.glob("files/*.wav"):
         global filename
@@ -106,9 +114,12 @@ def iterate_files():
     return toReturn
 
 def process():
-    toReturn = iterate_files()
+    #toReturn = iterate_files()
 
-    return toReturn
+    iterate_files.apply_async()
+
+    #return toReturn
+    return "Success"
 
 def main():
     toReturn = iterate_files()

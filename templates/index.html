@@ -9,19 +9,16 @@
 </head>
 
 <body>
-    {{ dropzone.create(action="/upload") }}
+    <div>
+        {{ dropzone.create(action="/upload") }}
+    </div>
 
-    {% if files is defined %}
-        {% for key, value in files.items() %}
-            {{ key }} <span>:</span> {{ value }} 
-            <br>
-        {% endfor %}
-    {% endif %}
+    <div>
+        <p><i><center>*file will be processed in the background after upload</center></i></p>
+    </div>
 
-    <pre>{{ data }}</pre>
-
-    {{ dropzone.config() }}
     {{ dropzone.load_js() }}
+    {{ dropzone.config() }}
 </body>
 
 </html>

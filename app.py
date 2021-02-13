@@ -12,13 +12,12 @@ from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 
-#app.config['MYSQL_HOST'] = 'localhost'
-#app.config['MYSQL_USER'] = 'root'
-#app.config['MYSQL_PASSWORD'] = ''
-#app.config['MYSQL_DB'] = 'ccas_db'
-
-#mysql = MySQL(app)
 dropzone = Dropzone(app)
+
+# Dropzone settings
+app.config['DROPZONE_UPLOAD_MULTIPLE'] = True
+app.config['DROPZONE_MAX_FILES'] = 10
+app.config['DROPZONE_PARALLEL_UPLOADS'] = 10
 
 app_path = os.path.dirname(os.path.realpath(__file__))
 files = {}
@@ -39,14 +38,18 @@ def process():
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
+    status = "n/a"
+
     if request.method == 'POST':
-        f = request.files.get('file')
-        f.save(os.path.join('files', f.filename))
+        for key, f in request.files.items():
+            if key.startswith('file'):
+                f.save(os.path.join('files', f.filename))
+
         result = engine.process()
+        print(result)
+        status = "The audio files will be processed in the background"
 
-        return render_template('index.html', files = result)
-
-    return render_template('index.html')
+    return render_template('index.html', status = status)
 
 if __name__ == '__main__':
     app.run(debug=True)
