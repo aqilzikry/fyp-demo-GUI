@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    {{ dropzone.create(action="/uploads") }}
+    {{ dropzone.create(action="/upload") }}
 
     {% if files is defined %}
         {% for key, value in files.items() %}

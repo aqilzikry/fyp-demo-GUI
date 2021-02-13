@@ -95,6 +95,7 @@ def iterate_files():
         filename = os.path.basename(file)
         global filelocation
         filelocation = file
+        toReturn[filename] = ({'audio' : filename})
         toReturn[filename] = ({'speech' : recog_speech()})
         toReturn[filename].update({'emotion' : recog_emotion()})
         toReturn[filename].update({'sentiment' : analyse_sentiment()})
@@ -137,7 +138,7 @@ def save_to_db(currentFile):
     sentiment_prob = float(toReturn[currentFile]['sentiment'][sentiment])
 
     cur = mydb.cursor()
-    cur.execute("INSERT INTO calls(operator_id, emotion, emotion_prob, sentiment, sentiment_prob, topics, cust_id) VALUES (%s, %s, %s, %s, %s, %s, %s)", ("1", emotion, emotion_prob, sentiment, sentiment_prob, topics, "1"))
+    cur.execute("INSERT INTO calls(operator_id, audio, emotion, emotion_prob, sentiment, sentiment_prob, topics, cust_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", ("1", filename, emotion, emotion_prob, sentiment, sentiment_prob, topics, "1"))
     mydb.commit()
     cur.close()
     print(currentFile + ' success')
