@@ -42,6 +42,7 @@ def recog_speech():
     # recognize speech and return result 
     global text
     text = r.recognize_google(audio, language=lang)
+
     return text
 
 def recog_emotion():
