@@ -20,11 +20,7 @@ app.config['DROPZONE_MAX_FILES'] = 10
 app.config['DROPZONE_PARALLEL_UPLOADS'] = 10
 
 app_path = os.path.dirname(os.path.realpath(__file__))
-files = {}
-
-@app.route('/', methods=['GET'])
-def home():
-    return redirect(url_for('upload'))    
+files = {}  
 
 @app.route('/process/<filename>', methods=['GET'])
 def singlefile(filename):
@@ -35,6 +31,14 @@ def singlefile(filename):
 def process():
     result = engine.process()
     return make_response(jsonify(result), 200)
+
+@app.route('/temp')
+def temp():
+    return render_template('temp.html')
+
+@app.route('/dropzone')
+def dropzoneview():
+    return render_template('index.html')
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
