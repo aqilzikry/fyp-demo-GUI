@@ -42,18 +42,14 @@ def dropzoneview():
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-    status = "n/a"
-
     if request.method == 'POST':
         for key, f in request.files.items():
             if key.startswith('file'):
                 f.save(os.path.join('files', f.filename))
 
-        result = engine.process()
-        print(result)
-        status = "The audio files will be processed in the background"
+        engine.process()
 
-    return render_template('index.html', status = status)
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
