@@ -34,6 +34,7 @@ def fetch_rows():
         results[str(call_id)].update({"intent": str(intent_name).capitalize()})
 
     print(results)
+    mydb.commit()
     cur.close()
 
     return results
