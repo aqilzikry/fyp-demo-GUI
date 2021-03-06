@@ -6,6 +6,7 @@ import malaya as m
 import json
 import operator
 import mysql.connector
+from datetime import datetime
 from flask import Flask
 from monkeylearn import MonkeyLearn
 from emotion_recog import extract_feature
@@ -32,6 +33,8 @@ filename = ""
 filelocation = ""
 text = ""
 lang = "ms-MY"
+
+topics_list = ["bills", "power outage", "tenancy", "bantuan", "payment"]
 
 
 def recog_speech():
@@ -95,7 +98,7 @@ def detect_topic():
 
     # run prediction on labels
     result = model.predict_proba(
-        [text], labels=["view bill", "bekalan elektrik", "bantuan"])
+        [text], labels=topics_list)
 
     # sort labels by likeliness
     sorted_result = sorted(result[0].items(), key=lambda x: x[1], reverse=True)
@@ -123,7 +126,7 @@ def iterate_files():
         save_to_db(filename)
         os.remove(file)
 
-    return toReturn
+    return "All audio files processed"
 
 
 def process():
@@ -131,8 +134,8 @@ def process():
 
     iterate_files.apply_async()
 
-    # return toReturn
-    return "Success"
+    return toReturn
+    # return "Success"
 
 
 def main():
@@ -156,22 +159,40 @@ def single_file(toProcess):
 
 
 def save_to_db(currentFile):
-    topics = json.dumps(toReturn[currentFile]["topic"])
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    topics_dict = {}
+    for j in range(len(topics_list)):
+        topics_dict[j+1] = topics_list[j]
+
+    topic_key = list(topics_dict.keys())
+    topic_value = list(topics_dict.values())
+
+    topic = max(toReturn[currentFile]["topic"].items(),
+                key=operator.itemgetter(1))[0]
+    detected_topic_key = topic_key[topic_value.index(topic)]
+
+    print(topic)
+    print(detected_topic_key)
 
     emotion = max(toReturn[currentFile]["emotion"].items(),
                   key=operator.itemgetter(1))[0]
-    emotion_prob = float(toReturn[currentFile]["emotion"][emotion])
+    emotion_confidence = float(toReturn[currentFile]["emotion"][emotion])
 
     sentiment = max(toReturn[currentFile]["sentiment"].items(),
                     key=operator.itemgetter(1))[0]
-    sentiment_prob = float(toReturn[currentFile]["sentiment"][sentiment])
+    sentiment_confidence = float(toReturn[currentFile]["sentiment"][sentiment])
 
     cur = mydb.cursor()
-    cur.execute(
-        "INSERT INTO calls(operator_id, audio, emotion, emotion_prob, sentiment, sentiment_prob, topics, cust_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-        ("1", filename, emotion, emotion_prob, sentiment, sentiment_prob,
-         topics, "1"),
-    )
+    cur.execute("""
+                INSERT INTO uploaded_calls
+                (datetime, emotion, emotion_confidence, sentiment, sentiment_confidence,
+                 call_score, customer_id, operator_id, intent_id, topic_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+               """,
+                (now, emotion, emotion_confidence, sentiment,
+                 sentiment_confidence, "1", "1", "1", "1", detected_topic_key))
+
     mydb.commit()
     cur.close()
     print(currentFile + " success")
