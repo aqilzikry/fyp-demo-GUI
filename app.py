@@ -6,6 +6,7 @@ import json
 import operator
 import urllib.request
 import engine
+import db_helper
 from flask import Flask, request, render_template, redirect, url_for, jsonify, make_response
 from flask_dropzone import Dropzone
 from flask_mysqldb import MySQL
@@ -38,6 +39,33 @@ def process():
 @app.route('/temp')
 def temp():
     return render_template('temp.html')
+
+
+@app.route('/customers')
+def render_customers_page():
+    return render_template('customers.html')
+
+
+@app.route('/results')
+def render_results_page():
+    rows = db_helper.fetch_rows()
+
+    return render_template('results.html', rows=rows)
+
+
+@app.route('/topics')
+def render_topics_page():
+    return render_template('topics.html')
+
+
+@app.route('/complaints')
+def render_complaints_page():
+    return render_template('complaints.html')
+
+
+@app.route('/report')
+def render_report_page():
+    return render_template('report.html')
 
 
 @app.route('/dropzone')

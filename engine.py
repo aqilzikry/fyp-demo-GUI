@@ -33,7 +33,6 @@ filename = ""
 filelocation = ""
 text = ""
 lang = "ms-MY"
-
 topics_list = ["bills", "power outage", "tenancy", "bantuan", "payment"]
 
 
@@ -111,6 +110,25 @@ def detect_topic():
     return dict(sorted_result)
 
 
+def detect_intent():
+    # load transformer model 'alxlnet' from malaya
+    model = m.zero_shot.classification.transformer(model="alxlnet")
+
+    # run prediction on labels
+    result = model.predict_proba(
+        [text], labels=["inquiry", "complaint", "service"])
+
+    # sort labels by likeliness
+    sorted_result = sorted(result[0].items(), key=lambda x: x[1], reverse=True)
+
+    for i in range(0, len(sorted_result)):
+        sorted_result[i] = list(sorted_result[i])
+        sorted_result[i][1] = sorted_result[i][1].item()
+
+    # add result to dict
+    return dict(sorted_result)
+
+
 @client.task
 def iterate_files():
     for file in glob.glob("files/*.wav"):
@@ -123,6 +141,7 @@ def iterate_files():
         toReturn[filename].update({"emotion": recog_emotion()})
         toReturn[filename].update({"sentiment": analyse_sentiment()})
         toReturn[filename].update({"topic": detect_topic()})
+        toReturn[filename].update({"intent": detect_intent()})
         save_to_db(filename)
         os.remove(file)
 
@@ -170,10 +189,12 @@ def save_to_db(currentFile):
 
     topic = max(toReturn[currentFile]["topic"].items(),
                 key=operator.itemgetter(1))[0]
-    detected_topic_key = topic_key[topic_value.index(topic)]
+    detected_topic_id = topic_key[topic_value.index(topic)]
 
-    print(topic)
-    print(detected_topic_key)
+    intent = max(toReturn[currentFile]["intent"].items(),
+                 key=operator.itemgetter(1))[0]
+    detected_intent_id = 1 if (intent == "inquiry") else 2 if (
+        intent == "complaint") else 3 if (intent == "service") else 0
 
     emotion = max(toReturn[currentFile]["emotion"].items(),
                   key=operator.itemgetter(1))[0]
@@ -183,15 +204,17 @@ def save_to_db(currentFile):
                     key=operator.itemgetter(1))[0]
     sentiment_confidence = float(toReturn[currentFile]["sentiment"][sentiment])
 
+    call_score = (sentiment_confidence * 0.4) + (emotion_confidence * 0.6)
+
     cur = mydb.cursor()
     cur.execute("""
                 INSERT INTO uploaded_calls
                 (datetime, emotion, emotion_confidence, sentiment, sentiment_confidence,
                  call_score, customer_id, operator_id, intent_id, topic_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-               """,
+                """,
                 (now, emotion, emotion_confidence, sentiment,
-                 sentiment_confidence, "1", "1", "1", "1", detected_topic_key))
+                 sentiment_confidence, call_score, "1", "1", detected_intent_id, detected_topic_id))
 
     mydb.commit()
     cur.close()
