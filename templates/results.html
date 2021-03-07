@@ -1,4 +1,5 @@
 <table class="table table-hover">
+    <caption style="caption-side: top;"><i>*highlighted cells indicate low call score confidence</i></caption>
     <thead class="thead-light">
         <tr>
             <th scope="col">#</th>
@@ -13,22 +14,27 @@
     </thead>
 
     <tbody>
-        {% for call_id, values in rows.items() %}
-        <tr>
+        {% if rows|length %} {% for call_id, values in rows.items() %}
+        <tr {% if rows[call_id]["score_confidence"] == "low" %}
+            class="table-warning"
+        {% endif %}>
             <td>{{ loop.index }}</td>
             <td>{{ rows[call_id]["datetime"] }}</td>
             <td>{{ rows[call_id]["operator"] }}</td>
             <td>{{ rows[call_id]["emotion"] }}</td>
             <td>{{ rows[call_id]["sentiment"] }}</td>
             <td>
-                <span {% if rows[call_id]["call_score"]> 80 %} class="badge badge-pill badge-success" {% endif %}
-                    {% if rows[call_id]["call_score"] > 70 %} class="badge badge-pill badge-warning"
-                    {% else %} class="badge badge-pill badge-danger" {% endif %}>
-                    {{ rows[call_id]["call_score"] }}
+                <span {% if rows[call_id]["call_score"]> 80 %} class="badge
+                badge-pill badge-success" {% endif %} {% if
+                rows[call_id]["call_score"] > 70 %} class="badge badge-pill
+                badge-warning" {% else %} class="badge badge-pill badge-danger"
+                {% endif %}> {{ rows[call_id]["call_score"] }}
             </td>
             <td>{{ rows[call_id]["topic"] }}</td>
             <td>{{ rows[call_id]["intent"] }}</td>
         </tr>
-        {% endfor %}
+        {% endfor %} {% else %}
+        <td colspan="8"><i>No records found</i></td>
+        {% endif %}
     </tbody>
 </table>

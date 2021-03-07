@@ -204,17 +204,25 @@ def save_to_db(currentFile):
                     key=operator.itemgetter(1))[0]
     sentiment_confidence = float(toReturn[currentFile]["sentiment"][sentiment])
 
-    call_score = (sentiment_confidence * 0.4) + (emotion_confidence * 0.6)
+    sentiment_score = 10 if sentiment == "negative" else 20 if sentiment == "neutral" \
+        else 40 if sentiment == "posivite" else -1
+    emotion_score = 20 if emotion == "angry" else 40 if emotion == "neutral" \
+        else 60 if emotion == "happy" else -1
+
+    score_confidence = "high" if (sentiment_confidence > 0.7 and emotion_confidence > 0.7) else "low"
+
+    call_score = (sentiment_score * sentiment_confidence) + \
+        (emotion_score * emotion_confidence)
 
     cur = mydb.cursor()
     cur.execute("""
                 INSERT INTO uploaded_calls
                 (datetime, emotion, emotion_confidence, sentiment, sentiment_confidence,
-                 call_score, customer_id, operator_id, intent_id, topic_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 score_confidence, call_score, customer_id, operator_id, intent_id, topic_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                (now, emotion, emotion_confidence, sentiment,
-                 sentiment_confidence, call_score, "1", "1", detected_intent_id, detected_topic_id))
+                (now, emotion, emotion_confidence, sentiment, sentiment_confidence,
+                 score_confidence, call_score, "1", "1", detected_intent_id, detected_topic_id))
 
     mydb.commit()
     cur.close()
